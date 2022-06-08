@@ -1,3 +1,6 @@
+using Assets.Scripts.Core;
+using System;
+using UltimateArcade.Server;
 using UnityEngine;
 using UnityEngine.AI;
 
@@ -21,6 +24,22 @@ namespace Mirror.Examples.Tanks
 
         [Header("Stats")]
         [SyncVar] public int health = 4;
+
+        private UltimateArcadeGameServerAPI api;
+        private void Start()
+        {
+            this.api = new UltimateArcadeGameServerAPI();
+            InitPlayerCmd(ExternalScriptBehavior.Token());
+        }
+
+        [Command]
+        private void InitPlayerCmd(string token)
+        {
+            //TODO remember player identity for rejoins etc
+            StartCoroutine(api.ActivatePlayer(token,
+                () => UADebug.Log("player joined"),
+                err => UADebug.Log("ERROR player join. TODO KICK PLAYER: " + err)));
+        }
 
         void Update()
         {
