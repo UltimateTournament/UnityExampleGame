@@ -1,0 +1,16 @@
+Library
+*.sln
+*.csproj
+*.pidb
+*.unityproj
+Temp
+*.pdb
+obj
+bin
+/Builds
+/Logs
+Asset Store
+Assets/AssetStoreTools
+.vs
+.vscode
+.vsconfig
