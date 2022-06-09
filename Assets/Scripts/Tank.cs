@@ -1,5 +1,6 @@
 using Assets.Scripts.Core;
 using System;
+using UltimateArcade.Frontend;
 using UltimateArcade.Server;
 using UnityEngine;
 using UnityEngine.AI;
@@ -25,15 +26,24 @@ namespace Mirror.Examples.Tanks
         [Header("Stats")]
         [SyncVar] public int health = 4;
 
-        private UltimateArcadeGameServerAPI api;
+        private UltimateArcadeGameServerAPI serverApi;
+        private UltimateArcadeGameClientAPI clientApi;
         private DateTime joinTime;
         private int shotsFired = 0;
         private string token;
 
         private void Start()
         {
-            this.api = new UltimateArcadeGameServerAPI();
-            InitPlayerCmd(ExternalScriptBehavior.Token());
+            if (base.isServer)
+            {
+                this.serverApi = new UltimateArcadeGameServerAPI();
+            }
+            else
+            {
+                var token = ExternalScriptBehavior.Token();
+                this.clientApi = new UltimateArcadeGameClientAPI(token, ExternalScriptBehavior.BaseApiServerName());
+                InitPlayerCmd(token);
+            }
         }
 
         [Command]
@@ -41,8 +51,8 @@ namespace Mirror.Examples.Tanks
         {
             this.joinTime = DateTime.Now;
             this.token = token;
-            StartCoroutine(api.ActivatePlayer(token,
-                () => UADebug.Log("player joined"),
+            StartCoroutine(serverApi.ActivatePlayer(token,
+                pi => UADebug.Log("player joined: " + pi.DisplayName),
                 err => UADebug.Log("ERROR player join. TODO KICK PLAYER: " + err)));
         }
 
@@ -90,10 +100,25 @@ namespace Mirror.Examples.Tanks
                 // score is time left - a bigger score is always better in the arcade
                 var maxTime = 5 * 60 * 1000;
                 var score = maxTime - (DateTime.Now - this.joinTime).Milliseconds;
-                StartCoroutine(api.ReportPlayerScore(this.token, score,
-                    () => UADebug.Log("player joined"),
+                StartCoroutine(serverApi.ReportPlayerScore(this.token, score,
+                    () =>
+                    {
+                        UADebug.Log("player score reported");
+                        this.ClientGameOver();
+                        StartCoroutine(this.serverApi.Shutdown(
+                            () => UADebug.Log("Shutdown requested"),
+                            err => UADebug.Log("couldn't request shutdown:" + err)
+                            )
+                        );
+                    },
                     err => UADebug.Log("ERROR player join. TODO KICK PLAYER: " + err)));
             }
+        }
+
+        [TargetRpc]
+        void ClientGameOver()
+        {
+            ExternalScriptBehavior.CloseGame();
         }
 
         // this is called on the tank that fired for all observers
