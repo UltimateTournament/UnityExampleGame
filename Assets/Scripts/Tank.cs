@@ -26,6 +26,10 @@ namespace Mirror.Examples.Tanks
         [SyncVar] public int health = 4;
 
         private UltimateArcadeGameServerAPI api;
+        private DateTime joinTime;
+        private int shotsFired = 0;
+        private string token;
+
         private void Start()
         {
             this.api = new UltimateArcadeGameServerAPI();
@@ -35,7 +39,8 @@ namespace Mirror.Examples.Tanks
         [Command]
         private void InitPlayerCmd(string token)
         {
-            //TODO remember player identity for rejoins etc
+            this.joinTime = DateTime.Now;
+            this.token = token;
             StartCoroutine(api.ActivatePlayer(token,
                 () => UADebug.Log("player joined"),
                 err => UADebug.Log("ERROR player join. TODO KICK PLAYER: " + err)));
@@ -77,6 +82,18 @@ namespace Mirror.Examples.Tanks
             GameObject projectile = Instantiate(projectilePrefab, projectileMount.position, projectileMount.rotation);
             NetworkServer.Spawn(projectile);
             RpcOnFire();
+            this.shotsFired++;
+            if (this.shotsFired == 5)
+            {
+                //TODO player should automatically lose when they take longer than the max time
+
+                // score is time left - a bigger score is always better in the arcade
+                var maxTime = 5 * 60 * 1000;
+                var score = maxTime - (DateTime.Now - this.joinTime).Milliseconds;
+                StartCoroutine(api.ReportPlayerScore(this.token, score,
+                    () => UADebug.Log("player joined"),
+                    err => UADebug.Log("ERROR player join. TODO KICK PLAYER: " + err)));
+            }
         }
 
         // this is called on the tank that fired for all observers
