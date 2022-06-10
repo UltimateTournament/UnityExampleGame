@@ -37,6 +37,7 @@ namespace Mirror.Examples.Tanks
             if (base.isServer)
             {
                 this.serverApi = new UltimateArcadeGameServerAPI();
+                AutoConnect.OnServerReady += AutoConnect_OnServerReady;
             }
             else
             {
@@ -44,6 +45,12 @@ namespace Mirror.Examples.Tanks
                 this.clientApi = new UltimateArcadeGameClientAPI(token, ExternalScriptBehavior.BaseApiServerName());
                 InitPlayerCmd(token);
             }
+        }
+
+        private void AutoConnect_OnServerReady()
+        {
+            UADebug.Log("If we would use any randomness, then we would use this seed: " + AutoConnect.RandomSeed);
+            // and we would only allow players to join after we setup all randomness
         }
 
         [Command]
