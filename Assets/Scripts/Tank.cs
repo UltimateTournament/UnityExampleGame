@@ -69,9 +69,10 @@ namespace Mirror.Examples.Tanks
             this.token = token;
             UADebug.Log("Activating player");
             StartCoroutine(serverApi.ActivatePlayer(token,
-                pi => {
+                pi =>
+                {
                     UADebug.Log("player joined: " + pi.DisplayName);
-                    },
+                },
                 err =>
                 {
                     UADebug.Log("ERROR player join. KICKING PLAYER: " + err);
@@ -94,7 +95,16 @@ namespace Mirror.Examples.Tanks
                         )
                     );
                 },
-                err => UADebug.Log("ERROR player join. TODO KICK PLAYER: " + err));
+                err =>
+                {
+                    UADebug.Log("ERROR reporting player score. KICKING PLAYER: " + err);
+                    this.ClientGameOver();
+                    StartCoroutine(this.serverApi.Shutdown(
+                        () => UADebug.Log("Shutdown requested"),
+                        err => UADebug.Log("couldn't request shutdown:" + err)
+                        )
+                    );
+                });
         }
 
         void Update()
@@ -149,7 +159,16 @@ namespace Mirror.Examples.Tanks
                             )
                         );
                     },
-                    err => UADebug.Log("ERROR player join. TODO KICK PLAYER: " + err)));
+                    err =>
+                    {
+                        UADebug.Log("ERROR reporting player score. KICKING PLAYER: " + err);
+                        this.ClientGameOver();
+                        StartCoroutine(this.serverApi.Shutdown(
+                            () => UADebug.Log("Shutdown requested"),
+                            err => UADebug.Log("couldn't request shutdown:" + err)
+                            )
+                        );
+                    }));
             }
         }
 
