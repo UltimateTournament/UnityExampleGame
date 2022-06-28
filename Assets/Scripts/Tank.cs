@@ -1,5 +1,6 @@
 using Assets.Scripts.Core;
 using System;
+using System.Collections;
 using UltimateArcade.Frontend;
 using UltimateArcade.Server;
 using UnityEngine;
@@ -41,15 +42,21 @@ namespace Mirror.Examples.Tanks
             }
             else
             {
-                var token = ExternalScriptBehavior.Token();
-                this.clientApi = new UltimateArcadeGameClientAPI(token, ExternalScriptBehavior.BaseApiServerName());
-                InitPlayerCmd(token);
+                AutoConnect.OnClientReady += AutoConnect_OnClientReady;
             }
         }
 
-        private void AutoConnect_OnServerReady()
+        private void AutoConnect_OnClientReady(string token)
         {
-            UADebug.Log("If we would use any randomness, then we would use this seed: " + AutoConnect.RandomSeed);
+            this.clientApi = new UltimateArcadeGameClientAPI(token, ExternalScriptBehavior.BaseApiServerName());
+            UADebug.Log("got token: " + token);
+            InitPlayerCmd(token);
+        }
+
+        private void AutoConnect_OnServerReady(string randomSeed)
+        {
+            UADebug.Log("For any randomness we need to use this seed: " + randomSeed);
+            UnityEngine.Random.InitState(randomSeed.GetHashCode());
             // and we would only allow players to join after we setup all randomness
         }
 
@@ -58,6 +65,7 @@ namespace Mirror.Examples.Tanks
         {
             this.joinTime = DateTime.Now;
             this.token = token;
+            UADebug.Log("Activating player");
             StartCoroutine(serverApi.ActivatePlayer(token,
                 pi => UADebug.Log("player joined: " + pi.DisplayName),
                 err => UADebug.Log("ERROR player join. TODO KICK PLAYER: " + err)));
