@@ -30,6 +30,7 @@ namespace Mirror.Examples.Tanks
         private UltimateArcadeGameServerAPI serverApi;
         private UltimateArcadeGameClientAPI clientApi;
         private DateTime joinTime;
+        private const int maxTimeMs = 5 * 60 * 1000;
         private int shotsFired = 0;
         private string token;
 
@@ -64,6 +65,7 @@ namespace Mirror.Examples.Tanks
         private void InitPlayerCmd(string token)
         {
             this.joinTime = DateTime.Now;
+            StartCoroutine(this.DeathCountdown());
             this.token = token;
             UADebug.Log("Activating player");
             StartCoroutine(serverApi.ActivatePlayer(token,
@@ -75,6 +77,24 @@ namespace Mirror.Examples.Tanks
                     UADebug.Log("ERROR player join. KICKING PLAYER: " + err);
                     NetworkServer.Destroy(gameObject);
                 }));
+        }
+
+        private IEnumerator DeathCountdown()
+        {
+            yield return new WaitForSeconds(maxTimeMs / 1000.0f);
+            UADebug.Log("player didn't finish in time");
+            yield return serverApi.ReportPlayerScore(this.token, 0,
+                () =>
+                {
+                    UADebug.Log("player score reported");
+                    this.ClientGameOver();
+                    StartCoroutine(this.serverApi.Shutdown(
+                        () => UADebug.Log("Shutdown requested"),
+                        err => UADebug.Log("couldn't request shutdown:" + err)
+                        )
+                    );
+                },
+                err => UADebug.Log("ERROR player join. TODO KICK PLAYER: " + err));
         }
 
         void Update()
@@ -116,11 +136,8 @@ namespace Mirror.Examples.Tanks
             this.shotsFired++;
             if (this.shotsFired == 5)
             {
-                //TODO player should automatically lose when they take longer than the max time
-
                 // score is time left - a bigger score is always better in the arcade
-                var maxTime = 5 * 60 * 1000;
-                var score = maxTime - (DateTime.Now - this.joinTime).Milliseconds;
+                var score = maxTimeMs - (DateTime.Now - this.joinTime).Milliseconds;
                 StartCoroutine(serverApi.ReportPlayerScore(this.token, score,
                     () =>
                     {
