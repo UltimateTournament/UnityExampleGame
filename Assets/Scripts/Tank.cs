@@ -137,7 +137,7 @@ namespace Mirror.Examples.Tanks
             if (this.shotsFired == 5)
             {
                 // score is time left - a bigger score is always better in the arcade
-                var score = maxTimeMs - (DateTime.Now - this.joinTime).Milliseconds;
+                var score = maxTimeMs - (int)((DateTime.Now - this.joinTime).TotalMilliseconds);
                 StartCoroutine(serverApi.ReportPlayerScore(this.token, score,
                     () =>
                     {
