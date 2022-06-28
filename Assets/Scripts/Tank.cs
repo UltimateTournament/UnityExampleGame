@@ -67,8 +67,14 @@ namespace Mirror.Examples.Tanks
             this.token = token;
             UADebug.Log("Activating player");
             StartCoroutine(serverApi.ActivatePlayer(token,
-                pi => UADebug.Log("player joined: " + pi.DisplayName),
-                err => UADebug.Log("ERROR player join. TODO KICK PLAYER: " + err)));
+                pi => {
+                    UADebug.Log("player joined: " + pi.DisplayName);
+                    },
+                err =>
+                {
+                    UADebug.Log("ERROR player join. KICKING PLAYER: " + err);
+                    NetworkServer.Destroy(gameObject);
+                }));
         }
 
         void Update()
