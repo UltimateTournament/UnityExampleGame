@@ -1,8 +1,6 @@
-using Assets.Scripts.Core;
 using System;
 using System.Collections;
-using UltimateArcade.Frontend;
-using UltimateArcade.Server;
+using UltimateArcade;
 using UnityEngine;
 using UnityEngine.AI;
 
